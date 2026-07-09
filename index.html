@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>হোয়াইটবোর্ড</title>
+<title>Learn with Pinky — হোয়াইটবোর্ড</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -14,6 +14,25 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+  }
+
+  /* Brand header */
+  .brand {
+    background: linear-gradient(90deg, #1e293b, #0f172a);
+    color: #fff;
+    padding: 10px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: 0.3px;
+  }
+  .brand .sub {
+    font-weight: 400;
+    font-size: 13px;
+    color: #93c5fd;
+    margin-left: 6px;
   }
 
   /* Toolbar */
@@ -27,12 +46,6 @@
     flex-wrap: wrap;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     z-index: 10;
-  }
-  .toolbar h1 {
-    font-size: 16px;
-    margin: 0 12px 0 0;
-    font-weight: 600;
-    white-space: nowrap;
   }
   .tool-group {
     display: flex;
@@ -105,19 +118,54 @@
     touch-action: none;
     cursor: crosshair;
   }
-  .text-input-box {
+
+  /* Draggable text boxes */
+  .text-box {
     position: absolute;
-    border: 2px dashed #3b82f6;
-    background: rgba(59,130,246,0.05);
+    min-width: 40px;
+    min-height: 20px;
+    padding: 4px 8px;
     outline: none;
-    resize: none;
-    font-family: 'Hind Siliguri', sans-serif;
-    padding: 4px;
-    min-width: 60px;
-    min-height: 24px;
+    cursor: move;
     line-height: 1.3;
+    font-family: 'Hind Siliguri', sans-serif;
+    white-space: pre-wrap;
+    word-break: break-word;
+    border: 1px dashed transparent;
     z-index: 5;
+    user-select: none;
   }
+  .text-box:hover {
+    border-color: #3b82f6;
+  }
+  .text-box.editing {
+    cursor: text;
+    border-color: #3b82f6;
+    background: rgba(59,130,246,0.06);
+    user-select: text;
+  }
+  .text-box .del-btn {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    width: 22px;
+    height: 22px;
+    background: #ef4444;
+    color: #fff;
+    border-radius: 50%;
+    border: none;
+    font-size: 13px;
+    line-height: 22px;
+    text-align: center;
+    cursor: pointer;
+    display: none;
+    padding: 0;
+  }
+  .text-box:hover .del-btn,
+  .text-box.editing .del-btn {
+    display: block;
+  }
+
   .hint {
     position: absolute;
     bottom: 12px;
@@ -131,22 +179,24 @@
     pointer-events: none;
     opacity: 0.9;
     transition: opacity 0.3s;
+    z-index: 6;
   }
 </style>
 </head>
 <body>
 
-<div class="toolbar">
-  <h1>📚 Learn with Pinky
-Study Smart. Achieve More.</h1>
+<div class="brand">
+  📚 Learn with Pinky <span class="sub">Study Smart. Achieve More.</span>
+</div>
 
+<div class="toolbar">
   <div class="tool-group">
-    <button class="tool-btn active" data-tool="pen" title="পেন">✏️</button>
-    <button class="tool-btn" data-tool="eraser" title="ইরেজার">🧽</button>
-    <button class="tool-btn" data-tool="text" title="টেক্সট">🔤</button>
-    <button class="tool-btn" data-tool="line" title="সরলরেখা">📏</button>
-    <button class="tool-btn" data-tool="rect" title="আয়তক্ষেত্র">▭</button>
-    <button class="tool-btn" data-tool="circle" title="বৃত্ত">⬤</button>
+    <button class="tool-btn active" data-tool="pen" title="আঁকো">✏️</button>
+    <button class="tool-btn" data-tool="eraser" title="মুছো">🧽</button>
+    <button class="tool-btn" data-tool="text" title="লেখো">🔤</button>
+    <button class="tool-btn" data-tool="line" title="সোজা লাইন">📏</button>
+    <button class="tool-btn" data-tool="rect" title="চারকোণা">▭</button>
+    <button class="tool-btn" data-tool="circle" title="গোল">⬤</button>
   </div>
 
   <div class="tool-group">
@@ -165,14 +215,15 @@ Study Smart. Achieve More.</h1>
     </select>
   </div>
 
-  <button class="action-btn" id="undoBtn" title="Undo">↩️ Undo</button>
-  <button class="action-btn danger" id="clearBtn" title="সব মুছুন">🗑️ সব মুছুন</button>
-  <button class="action-btn primary" id="downloadBtn" title="ছবি ডাউনলোড">⬇️ ডাউনলোড</button>
+  <button class="action-btn" id="undoBtn" title="আগেরটায় ফিরে যাও">↩️ ফিরে যাও</button>
+  <button class="action-btn danger" id="clearBtn" title="সব মুছে ফেলো">🗑️ সব মুছো</button>
+  <button class="action-btn primary" id="downloadBtn" title="ছবি হিসেবে সেভ করো">⬇️ সেভ করো</button>
 </div>
 
 <div class="canvas-wrap" id="canvasWrap">
   <canvas id="board"></canvas>
-  <div class="hint" id="hint">টেক্সট টুল বেছে বোর্ডে ক্লিক করো লেখার জন্য</div>
+  <div class="hint" id="hint">লেখা বসাতে: 🔤 বাটনে ক্লিক করো, তারপর বোর্ডে ক্লিক করো</div>
+  <div class="hint" id="shiftHint" style="bottom: 44px; background: rgba(37,99,235,0.9);">মাউস ছাড়া আঁকতে: Shift চেপে ধরে একে একে ক্লিক করো, লাইন এমনিতেই জোড়া লাগবে</div>
 </div>
 
 <script>
@@ -220,8 +271,12 @@ function getPos(e) {
   return { x: e.clientX - rect.left, y: e.clientY - rect.top };
 }
 
+let shiftLastPoint = null; // for shift+click point-to-point drawing
+
 function startDraw(e) {
-  if (tool === 'text') return; // handled separately on click
+  if (tool === 'text') return;
+  if (e.target !== canvas) return;
+  if (e.shiftKey) return; // shift+click is handled separately (no drag needed)
   e.preventDefault();
   drawing = true;
   const pos = getPos(e);
@@ -280,44 +335,207 @@ canvas.addEventListener('touchstart', startDraw, { passive: false });
 canvas.addEventListener('touchmove', moveDraw, { passive: false });
 canvas.addEventListener('touchend', endDraw);
 
-// Text tool
-canvas.addEventListener('click', (e) => {
-  if (tool !== 'text') return;
-  const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
+/* ---------- Draggable Text Boxes ---------- */
+let zTop = 100;
 
-  const box = document.createElement('textarea');
-  box.className = 'text-input-box';
+function createTextBox(x, y, text = '') {
+  const box = document.createElement('div');
+  box.className = 'text-box';
+  box.contentEditable = 'false';
   box.style.left = x + 'px';
   box.style.top = y + 'px';
   box.style.color = color;
   box.style.fontSize = fontSize + 'px';
-  wrap.appendChild(box);
-  box.focus();
+  box.style.zIndex = ++zTop;
+  box.innerText = text || 'এখানে লেখো';
 
-  function commit() {
-    const text = box.value;
-    if (text.trim()) {
-      ctx.fillStyle = color;
-      ctx.font = fontSize + 'px "Hind Siliguri", sans-serif';
-      ctx.textBaseline = 'top';
-      const lines = text.split('\n');
-      lines.forEach((line, i) => {
-        ctx.fillText(line, x + 4, y + 4 + i * (fontSize * 1.3));
-      });
-      saveHistory();
+  const delBtn = document.createElement('button');
+  delBtn.className = 'del-btn';
+  delBtn.innerHTML = '✕';
+  delBtn.title = 'মুছো';
+  delBtn.addEventListener('mousedown', (e) => e.stopPropagation());
+  delBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    box.remove();
+  });
+  box.appendChild(delBtn);
+
+  wrap.appendChild(box);
+  enableDrag(box);
+  enableEdit(box);
+
+  // auto-focus for editing right away
+  setTimeout(() => enterEditMode(box), 0);
+
+  return box;
+}
+
+function enterEditMode(box) {
+  box.classList.add('editing');
+  box.contentEditable = 'true';
+  box.style.zIndex = ++zTop;
+  // select placeholder text
+  if (box.innerText.trim() === 'এখানে লেখো') {
+    box.innerText = '';
+  }
+  box.focus();
+  placeCaretAtEnd(box);
+}
+
+function placeCaretAtEnd(el) {
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+function enableEdit(box) {
+  box.addEventListener('dblclick', (e) => {
+    e.stopPropagation();
+    enterEditMode(box);
+  });
+  box.addEventListener('blur', () => {
+    box.classList.remove('editing');
+    box.contentEditable = 'false';
+    if (box.innerText.trim() === '') {
+      box.remove();
+    } else {
+      // strip stray del button text if any leaked into innerText
+      const delBtnRef = box.querySelector('.del-btn');
+      if (!delBtnRef) {
+        const newDel = document.createElement('button');
+        newDel.className = 'del-btn';
+        newDel.innerHTML = '✕';
+        newDel.addEventListener('mousedown', (e) => e.stopPropagation());
+        newDel.addEventListener('click', (e) => { e.stopPropagation(); box.remove(); });
+        box.appendChild(newDel);
+      }
     }
-    if (box.parentNode) wrap.removeChild(box);
+  });
+  box.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      box.blur();
+    }
+  });
+}
+
+function enableDrag(box) {
+  let offsetX = 0, offsetY = 0, isDragging = false;
+
+  function onDown(e) {
+    if (box.classList.contains('editing')) return;
+    if (e.target.classList.contains('del-btn')) return;
+    e.preventDefault();
+    isDragging = true;
+    box.style.zIndex = ++zTop;
+    const rect = box.getBoundingClientRect();
+    const wrapRect = wrap.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    offsetX = clientX - rect.left;
+    offsetY = clientY - rect.top;
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onUp);
   }
 
-  box.addEventListener('blur', commit);
-  box.addEventListener('keydown', (ev) => {
-    if (ev.key === 'Escape') { box.value = ''; box.blur(); }
-  });
+  function onMove(e) {
+    if (!isDragging) return;
+    e.preventDefault();
+    const wrapRect = wrap.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    let newX = clientX - wrapRect.left - offsetX;
+    let newY = clientY - wrapRect.top - offsetY;
+    newX = Math.max(0, Math.min(newX, wrap.clientWidth - box.offsetWidth));
+    newY = Math.max(0, Math.min(newY, wrap.clientHeight - box.offsetHeight));
+    box.style.left = newX + 'px';
+    box.style.top = newY + 'px';
+  }
+
+  function onUp() {
+    isDragging = false;
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('touchend', onUp);
+  }
+
+  box.addEventListener('mousedown', onDown);
+  box.addEventListener('touchstart', onDown, { passive: false });
+}
+
+canvas.addEventListener('click', (e) => {
+  // Text tool: click places a draggable text box (unaffected by shift)
+  if (tool === 'text') {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    createTextBox(x, y);
+    return;
+  }
+
+  // Not holding Shift: reset the point-chain, do nothing else here
+  if (!e.shiftKey) {
+    shiftLastPoint = null;
+    return;
+  }
+
+  // Shift+Click: place a point, connect to the previous point with a line/erase-dot.
+  // This lets someone draw without a mouse — just click point after point.
+  const pos = getPos(e);
+
+  if (tool === 'eraser') {
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, (size * 3) / 2, 0, Math.PI * 2);
+    ctx.fill();
+    if (shiftLastPoint) {
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = size * 3;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(shiftLastPoint.x, shiftLastPoint.y);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+    }
+  } else {
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = size;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    if (shiftLastPoint) {
+      ctx.beginPath();
+      ctx.moveTo(shiftLastPoint.x, shiftLastPoint.y);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+    } else {
+      // first point in the chain: draw a dot so a single click is visible
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, size / 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  shiftLastPoint = pos;
+  saveHistory();
 });
 
-// Toolbar interactions
+// Double-click while Shift-drawing a chain: closes the shape back to the first point
+canvas.addEventListener('dblclick', (e) => {
+  if (tool === 'text') return;
+  shiftLastPoint = null; // ends the current point-chain
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') shiftLastPoint = null; // start a fresh chain
+});
+
+/* ---------- Toolbar interactions ---------- */
 document.querySelectorAll('.tool-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
@@ -325,6 +543,7 @@ document.querySelectorAll('.tool-btn').forEach(btn => {
     tool = btn.dataset.tool;
     canvas.style.cursor = tool === 'text' ? 'text' : 'crosshair';
     hint.style.opacity = tool === 'text' ? '0.9' : '0';
+    shiftLastPoint = null; // reset point-chain when switching tools
   });
 });
 
@@ -340,10 +559,11 @@ document.getElementById('fontSize').addEventListener('change', (e) => {
 });
 
 document.getElementById('clearBtn').addEventListener('click', () => {
-  if (confirm('সত্যিই পুরো বোর্ড মুছে ফেলতে চাও?')) {
+  if (confirm('সব মুছে দিতে চাও? (আঁকা আর লেখা সব চলে যাবে)')) {
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     saveHistory();
+    document.querySelectorAll('.text-box').forEach(b => b.remove());
   }
 });
 
@@ -360,14 +580,41 @@ document.getElementById('undoBtn').addEventListener('click', () => {
   }
 });
 
+/* ---------- Download: merge canvas + text boxes into one PNG ---------- */
 document.getElementById('downloadBtn').addEventListener('click', () => {
+  const exportCanvas = document.createElement('canvas');
+  exportCanvas.width = canvas.width;
+  exportCanvas.height = canvas.height;
+  const ectx = exportCanvas.getContext('2d');
+  ectx.fillStyle = '#ffffff';
+  ectx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+  ectx.drawImage(canvas, 0, 0);
+
+  const wrapRect = wrap.getBoundingClientRect();
+  document.querySelectorAll('.text-box').forEach(box => {
+    const rect = box.getBoundingClientRect();
+    const x = rect.left - wrapRect.left;
+    const y = rect.top - wrapRect.top;
+    const style = window.getComputedStyle(box);
+    const fs = parseInt(style.fontSize);
+    ectx.fillStyle = box.style.color || '#1e293b';
+    ectx.font = fs + 'px "Hind Siliguri", sans-serif';
+    ectx.textBaseline = 'top';
+    const text = box.innerText.replace('✕', '').trim();
+    const lines = text.split('\n');
+    lines.forEach((line, i) => {
+      ectx.fillText(line, x + 8, y + 4 + i * (fs * 1.3));
+    });
+  });
+
   const link = document.createElement('a');
-  link.download = 'whiteboard.png';
-  link.href = canvas.toDataURL('image/png');
+  link.download = 'learn-with-pinky-whiteboard.png';
+  link.href = exportCanvas.toDataURL('image/png');
   link.click();
 });
 
-setTimeout(() => { hint.style.opacity = '0'; }, 4000);
+setTimeout(() => { hint.style.opacity = '0'; }, 5000);
+setTimeout(() => { document.getElementById('shiftHint').style.opacity = '0'; }, 7000);
 </script>
 
 </body>
